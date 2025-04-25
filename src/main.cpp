@@ -113,9 +113,6 @@ void displayDigit(int digit, CRGB leds[]) {
 }
 
 void updateDisplay(int score_int) {
-  #if defined(PANEL_TYPE_LARGE)
-  Serial.print("Inside update display");
-  #endif
   
   std::string score = std::to_string(score_int);
 
@@ -189,13 +186,11 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       break;
 
     case WStype_TEXT: {
-      #if defined(PANEL_TYPE_LARGE)
       Serial.println("[DEBUG] Received raw WebSocket payload:");
       for (size_t i = 0; i < length; i++) {
         Serial.print((char)payload[i]);
       }
       Serial.println();
-      #endif
 
       receivedScore = String((char*)payload);
       Serial.print("[INFO] Received Score: ");
