@@ -3,6 +3,7 @@
 #include <FastLED.h>
 #include <string>
 #include <iostream>
+#include "WebSocketHandler.h"
 
 #ifndef WIFI_SSID
   #define WIFI_SSID "Unknown_SSID"
@@ -30,8 +31,8 @@ const char* password = WIFI_PASSWORD;
 
 String websocket_server = SERVER;
 String factionName = FACTION_NAME;
-String wsPath = "/score_ws/" + factionName;
-const uint16_t websocket_port = 80;
+String wsPath = "/score_ws/" + factionName + "/timed";
+const uint16_t websocket_port = 80;  // Default port for WebSocket
 unsigned long lastLoop = 0;
 int currentDigits[4] = {-1, -1, -1, -1};  // -1 means nothing shown
 
@@ -69,10 +70,15 @@ String receivedScore = "";
   };
 #endif
 
-#define PANEL1_PIN 33  // Thousands
-#define PANEL2_PIN 32  // Hundreds
-#define PANEL3_PIN 22  // Tens
-#define PANEL4_PIN 21  // Units
+// #define PANEL1_PIN 33  // Thousands
+// #define PANEL2_PIN 32  // Hundreds
+// #define PANEL3_PIN 22  // Tens
+// #define PANEL4_PIN 21  // Units
+
+#define PANEL1_PIN 22  // Thousands
+#define PANEL2_PIN 21  // Hundreds
+#define PANEL3_PIN 32  // Tens
+#define PANEL4_PIN 33  // Units
 
 CRGB leds1[NUM_LEDS];
 CRGB leds2[NUM_LEDS];
@@ -151,13 +157,6 @@ void updateDisplay(int score_int) {
     
     int displayDigitValue = score[i] - '0';
     
-    #if defined(PANEL_TYPE_LARGE)
-    Serial.print("Display digit value: ");
-    Serial.println(displayDigitValue);
-    Serial.print("score[i]: ");
-    Serial.println(score[i]);
-    #endif
-    
     currentDigits[i] = displayDigitValue;
     
     switch(i) {
@@ -177,50 +176,6 @@ void updateDisplay(int score_int) {
   }
 
   FastLED.show();
-}
-
-void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
-  switch (type) {
-    case WStype_CONNECTED:
-      Serial.println("[INFO] Connected to WebSocket server");
-      break;
-
-    case WStype_TEXT: {
-      Serial.println("[DEBUG] Received raw WebSocket payload:");
-      for (size_t i = 0; i < length; i++) {
-        Serial.print((char)payload[i]);
-      }
-      Serial.println();
-
-      receivedScore = String((char*)payload);
-      Serial.print("[INFO] Received Score: ");
-      Serial.println(receivedScore);
-
-      int score = receivedScore.toInt();
-      if (score >= 0 && score <= 9999 && score != previousScore) {  
-        updateDisplay(score);  
-        previousScore = score;
-        Serial.print("[INFO] Updated display to score: ");
-        Serial.println(score);
-      } else {
-        Serial.println("[WARNING] Invalid score received, ignoring...");
-      }
-      break;
-    }
-    
-    case WStype_PONG:
-    case WStype_PING:
-      break;
-
-    case WStype_DISCONNECTED:
-      Serial.println("[ERROR] Disconnected from WebSocket server!");
-      break;
-
-    default:
-      Serial.print("[DEBUG] Unhandled WebSocket event type: ");
-      Serial.println(type);
-      break;
-  }
 }
 
 void connectWiFi() {
